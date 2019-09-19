@@ -49,9 +49,9 @@ const countNeighbours = (grid, position, type = cell.LIVE) => {
     let counter = 0;
     for (let i = x - 1 < 0 ? 0 : x - 1; i <= x + 1; i++) {
         for (let j = y - 1 < 0 ? 0 : y - 1; j <= y + 1; j++) {
-            if((i !== x || j !== y) && i < grid.x && j < grid.y) {
+            if ((i !== x || j !== y) && i < grid.x && j < grid.y) {
                 const cellData = grid.data[i][j];
-                if(cellData === type) {
+                if (cellData === type) {
                     counter++;
                 }
             }
@@ -71,11 +71,11 @@ const countNeighbours = (grid, position, type = cell.LIVE) => {
 const update = (originalGrid, updatedGridData, position, neighboursCount) => {
     const {x, y} = position;
 
-    if(originalGrid.data[x][y] === cell.LIVE && (neighboursCount < 2 || neighboursCount > 3)) {
+    if (originalGrid.data[x][y] === cell.LIVE && (neighboursCount < 2 || neighboursCount > 3)) {
         updatedGridData[x][y] = cell.DEAD;
     }
 
-    if(originalGrid.data[x][y] === cell.DEAD && neighboursCount === 3) {
+    if (originalGrid.data[x][y] === cell.DEAD && neighboursCount === 3) {
         updatedGridData[x][y] = cell.LIVE;
     }
 
@@ -92,7 +92,7 @@ const age = (times) => {
         for (let j = 0; j < originalGrid.y; j++) {
             neighboursCount = countNeighbours(originalGrid, {x: i, y: j});
             console.log(`Positions: ${i} - ${j} ->`, neighboursCount);
-            updatedGridData = update(originalGrid, updatedGridData, {x: i, y: j} ,neighboursCount);
+            updatedGridData = update(originalGrid, updatedGridData, {x: i, y: j}, neighboursCount);
         }
     }
 
@@ -120,20 +120,15 @@ app.get('/grids/:id', (req, res) => {
             (err, [rows]) => {
                 if (err) {
                     res.status(400).json(err.message);
+                } else if (typeof rows === 'undefined') {
+                    res.status(404).json('No grids found with ID: ' + id);
+                } else {
+                    res.status(200).json({...rows});
                 }
-
-                // if(!row) {
-                //     res.status(404).json('No grids found with ID: ' + id);
-                // }
-
-                res.status(200).json({...rows});
             });
     } else {
         res.status(400).json('Invalid Request');
     }
-
-    // console.log('Params: ', JSON.stringify(req.params), id);
-    // res.status(200).json({message: 'Success'});
 });
 
 app.post('/grids', (req, res) => {
@@ -143,12 +138,32 @@ app.post('/grids', (req, res) => {
         function (err) {
             if (err) {
                 res.status(400).json(err.message);
+            } else {
+                db.all(`SELECT * FROM grids WHERE id = ?`,
+                    [this.lastID],
+                    (err, [rows]) => {
+                        if (err) {
+                            res.status(400).json(err.message);
+                        } else {
+                            res.status(200).json({...rows});
+                        }
+                    });
             }
-
-            console.log(JSON.stringify(this, null, 4));
-            res.status(200).json(this.lastID);
         });
+});
 
+app.patch('/grids/:id', (req, res) => {
+    const {id} = req.params;
+    const {x, y, data} = req.body;
+    db.run(`UPDATE grids SET x = ?, y = ?, data = ? WHERE id = ?`,
+        [x, y, data, id],
+        function (err) {
+            if (err) {
+                res.status(400).json(err.message);
+            } else {
+                res.status(200).json('Updated successfully. ID: ' + id);
+            }
+        });
 });
 
 // Respond with 404 to any routes not matching API endpoints
