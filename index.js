@@ -24,9 +24,8 @@ let db = new sqlite3.Database('./database/conway.db', sqlite3.OPEN_READWRITE, (e
 
 const cell = {LIVE: '*', DEAD: '.'};
 
-const getStringFrom2DArray = ({x, y, data}) => {
-    console.log(typeof data);
-    return {x, y, data: [].concat.apply([], data).join()};
+const getStringFrom2DArray = (data) => {
+    return [].concat.apply([], data).join();
 };
 
 const get2DArrayFromString = ({x, y, data}) => {
@@ -82,34 +81,63 @@ const update = (originalGrid, updatedGridData, position, neighboursCount) => {
     return updatedGridData;
 };
 
-const age = (times) => {
-    let originalGrid = get2DArrayFromString({x: 3, y: 3, data: '*,.,*,.,*,*,.,.,*'});
-
+const calculateAge = (agesArray, grid) => {
+    const maxCount = Math.max(...agesArray);
+    console.log('max count: ', maxCount);
+    let originalGrid = get2DArrayFromString(grid);
     // Deep copy
     let updatedGridData = originalGrid.data.map((arr) => arr.slice());
-    let neighboursCount = 0;
-    for (let i = 0; i < originalGrid.x; i++) {
-        for (let j = 0; j < originalGrid.y; j++) {
-            neighboursCount = countNeighbours(originalGrid, {x: i, y: j});
-            console.log(`Positions: ${i} - ${j} ->`, neighboursCount);
-            updatedGridData = update(originalGrid, updatedGridData, {x: i, y: j}, neighboursCount);
+    let count = 1, ages_index = 0, data = [];
+
+    while(count <= maxCount) {
+        console.log(count);
+        let neighboursCount = 0;
+        for (let i = 0; i < originalGrid.x; i++) {
+            for (let j = 0; j < originalGrid.y; j++) {
+                neighboursCount = countNeighbours(originalGrid, {x: i, y: j});
+                // console.log(`Positions: ${i} - ${j} ->`, neighboursCount);
+                updatedGridData = update(originalGrid, updatedGridData, {x: i, y: j}, neighboursCount);
+            }
         }
+
+        // Store in data array
+        if(count === agesArray[ages_index]) {
+            data.push({
+                age: count,
+                grid: getStringFrom2DArray(updatedGridData)
+            });
+            ages_index++;
+        }
+
+        // Replace the originalGrid with updatedGridData
+        originalGrid.data = updatedGridData.map((arr) => arr.slice());
+        count++;
     }
 
-    // console.log(updatedGridData);
-    // console.log(originalGrid.data);
+    return data;
 };
-
-// age();
-
 
 app.get('/grids/:id/after', (req, res) => {
     const id = parseInt(req.params.id);
-    const age = req.query.age.split(',').map((item) => parseInt(item, 10));
+    const age = req.query.age.split(',').map((item) => parseInt(item, 10)).sort((a, b) => a - b);
 
-    console.log('Query: ', JSON.stringify(req.query), age);
-    console.log('Params: ', JSON.stringify(req.params), id);
-    res.status(200).json({message: 'Success with age'});
+    if (id) {
+        db.all(`SELECT * FROM grids WHERE id = ?`,
+            [id],
+            (err, [rows]) => {
+                if (err) {
+                    res.status(400).json(err.message);
+                } else if (typeof rows === 'undefined') {
+                    res.status(404).json('No grids found with ID: ' + id);
+                } else {
+                    const {id, x, y, data} = rows;
+                    const newData = calculateAge(age, {x,y,data});
+                    res.status(200).json({id, x, y, data: newData});
+                }
+            });
+    } else {
+        res.status(400).json('Invalid Request');
+    }
 });
 
 app.get('/grids/:id', (req, res) => {
