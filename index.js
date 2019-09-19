@@ -96,24 +96,60 @@ const age = (times) => {
         }
     }
 
-    console.log(updatedGridData);
-    console.log(originalGrid.data);
+    // console.log(updatedGridData);
+    // console.log(originalGrid.data);
 };
 
-age();
+// age();
 
 
-// app.get('/hello', (req, res) => {
-//     db.all(`SELECT id, username FROM users`,
-//         [],
-//         (err, rows) => {
-//             if (err) {
-//                 res.status(400).json(err.message);
-//             }
-//
-//             res.status(200).json({...rows});
-//         });
-// });
+app.get('/grids/:id/after', (req, res) => {
+    const id = parseInt(req.params.id);
+    const age = req.query.age.split(',').map((item) => parseInt(item, 10));
+
+    console.log('Query: ', JSON.stringify(req.query), age);
+    console.log('Params: ', JSON.stringify(req.params), id);
+    res.status(200).json({message: 'Success with age'});
+});
+
+app.get('/grids/:id', (req, res) => {
+    const {id} = req.params;
+    if (id) {
+        db.all(`SELECT * FROM grids WHERE id = ?`,
+            [id],
+            (err, [rows]) => {
+                if (err) {
+                    res.status(400).json(err.message);
+                }
+
+                // if(!row) {
+                //     res.status(404).json('No grids found with ID: ' + id);
+                // }
+
+                res.status(200).json({...rows});
+            });
+    } else {
+        res.status(400).json('Invalid Request');
+    }
+
+    // console.log('Params: ', JSON.stringify(req.params), id);
+    // res.status(200).json({message: 'Success'});
+});
+
+app.post('/grids', (req, res) => {
+    const {x, y, data} = req.body;
+    db.run(`INSERT INTO grids (x, y, data) VALUES (?,?,?)`,
+        [x, y, data],
+        function (err) {
+            if (err) {
+                res.status(400).json(err.message);
+            }
+
+            console.log(JSON.stringify(this, null, 4));
+            res.status(200).json(this.lastID);
+        });
+
+});
 
 // Respond with 404 to any routes not matching API endpoints
 app.all('/*', (req, res) => {
