@@ -20,11 +20,11 @@ let db = new sqlite3.Database('./database/conway.db', sqlite3.OPEN_READWRITE, (e
 const cell = {LIVE: '*', DEAD: '.'};
 
 const getStringFrom2DArray = (data) => {
-    return [].concat.apply([], data).join();
+    return [].concat.apply([], data).join('');
 };
 
 const get2DArrayFromString = ({x, y, data}) => {
-    const dataArr = data.split(',');
+    const dataArr = data.split('');
     let data2DArray = [];
 
     while (dataArr.length) {
@@ -33,6 +33,9 @@ const get2DArrayFromString = ({x, y, data}) => {
 
     return {x, y, data: data2DArray};
 };
+
+// const {data: lala} = get2DArrayFromString({x: 3, y: 2, data:'*..**.'});
+// console.log(getStringFrom2DArray(lala));
 
 /**
  * @position = {x, y}
@@ -78,14 +81,14 @@ const update = (originalGrid, updatedGridData, position, neighboursCount) => {
 
 const calculateAge = (agesArray, grid) => {
     const maxCount = Math.max(...agesArray);
-    console.log('max count: ', maxCount);
+    // console.log('max count: ', maxCount);
     let originalGrid = get2DArrayFromString(grid);
     // Deep copy
     let updatedGridData = originalGrid.data.map((arr) => arr.slice());
     let count = 1, ages_index = 0, data = [];
 
     while(count <= maxCount) {
-        console.log(count);
+        // console.log(count);
         let neighboursCount = 0;
         for (let i = 0; i < originalGrid.x; i++) {
             for (let j = 0; j < originalGrid.y; j++) {
