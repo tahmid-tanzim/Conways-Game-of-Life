@@ -17,11 +17,6 @@ let db = new sqlite3.Database('./database/conway.db', sqlite3.OPEN_READWRITE, (e
     console.log('Connected to the Conway database.');
 });
 
-/**
- * Live Cell is `*`
- * Dead Cell is `.`
- * */
-
 const cell = {LIVE: '*', DEAD: '.'};
 
 const getStringFrom2DArray = (data) => {
@@ -199,7 +194,7 @@ app.all('/*', (req, res) => {
     res.status(404).json('No endpoint exists at ' + req.originalUrl);
 });
 
-const server = app.listen(port, () => console.log(`Instagram app listening on port ${port}!`));
+const server = app.listen(process.env.PORT || port, () => console.log(`Conway app listening on port ${port}!`));
 
 process.on('SIGINT', () => {
     db.close((err) => {
