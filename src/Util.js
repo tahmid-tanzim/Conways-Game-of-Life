@@ -7,7 +7,7 @@ const get2DArrayFromString = ({x, y, data}) => {
     let data2DArray = [];
 
     while (dataArr.length) {
-        data2DArray.push(dataArr.splice(0, x));
+        data2DArray.push(dataArr.splice(0, y));
     }
 
     return {x, y, data: data2DArray};
@@ -20,17 +20,13 @@ const get2DArrayFromString = ({x, y, data}) => {
 const countNeighbours = (grid, position, type) => {
     const {x, y} = position;
     let counter = 0;
-    for (let i = x - 1 < 0 ? 0 : x - 1; i <= x + 1; i++) {
-        for (let j = y - 1 < 0 ? 0 : y - 1; j <= y + 1; j++) {
-            if ((i !== x || j !== y) && i < grid.x && j < grid.y) {
-                const cellData = grid.data[i][j];
-                if (cellData === type) {
-                    counter++;
-                }
+    for (let i = Math.max(0, x - 1); i <= Math.min(x + 1, grid.x - 1); i++) {
+        for (let j = Math.max(0, y - 1); j <= Math.min(y + 1, grid.y - 1); j++) {
+            if ((i !== x || j !== y) && grid.data[i][j] === type) {
+                counter++;
             }
         }
     }
-
     return counter;
 };
 
@@ -91,4 +87,8 @@ const calculateAge = (agesArray, grid) => {
     return data;
 };
 
-module.exports = {calculateAge, countNeighbours, get2DArrayFromString};
+module.exports = {
+    calculateAge,
+    countNeighbours, // Exported Only for test purpose
+    get2DArrayFromString // Exported Only for test purpose
+};
